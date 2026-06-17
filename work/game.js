@@ -88,6 +88,12 @@ const DEFINITIONS = {
   items: {
     herb: { name: "Herb", type: "material" },
     boar_hide: { name: "Boar Hide", type: "material" },
+    grain: { name: "Grain", type: "material" },
+    flour: { name: "Flour", type: "material" },
+    oil: { name: "Oil", type: "material" },
+    leather_strip: { name: "Leather Strip", type: "material" },
+    ingot: { name: "Iron Ingot", type: "material" },
+    coal: { name: "Coal", type: "material" },
     minor_potion: { name: "Minor Potion", type: "consumable", heal: 24 },
     moss: { name: "Bog Moss", type: "material" },
     iron_ore: { name: "Iron Ore", type: "material" },
@@ -108,8 +114,8 @@ const DEFINITIONS = {
     fisher_hat: { name: "Fisher Hat", type: "equipment", slot: "cloak", maxHp: 2, cost: 2 },
   },
   bankCategories: {
-    materials: ["herb", "boar_hide", "moss", "iron_ore", "bog_venom", "relic_shard", "drake_scale", "obsidian_core", "ember_ash", "legend_shard"],
-    intermediates: ["minor_potion", "iron_sword", "leather_armor", "scout_cloak", "war_band", "bronze_pick", "fisher_hat"],
+    materials: ["herb", "boar_hide", "grain", "moss", "iron_ore", "bog_venom", "relic_shard", "drake_scale", "obsidian_core", "ember_ash", "legend_shard"],
+    intermediates: ["minor_potion", "flour", "oil", "leather_strip", "ingot", "coal", "iron_sword", "leather_armor", "scout_cloak", "war_band", "bronze_pick", "fisher_hat"],
     consumables: ["minor_potion"],
     currency: ["ancient_coin"],
     equipment: ["steel_blade", "iron_sword", "leather_armor", "scout_cloak", "war_band", "bronze_pick", "fisher_hat"],
@@ -140,6 +146,9 @@ const DEFINITIONS = {
     { id: "mill", name: "Windmill", cost: { herb: 20, moss: 10 }, unlocks: ["grain_chain"] },
     { id: "press", name: "Oil Press", cost: { boar_hide: 12, moss: 10 }, unlocks: ["oil_chain"] },
     { id: "workshop", name: "Workshop", cost: { iron_ore: 18, relic_shard: 5 }, unlocks: ["tool_chain"] },
+    { id: "tannery", name: "Tannery", cost: { boar_hide: 15, moss: 8 }, unlocks: ["leather_chain"] },
+    { id: "kiln", name: "Kiln", cost: { grain: 12, moss: 12 }, unlocks: ["coal_chain"] },
+    { id: "foundry", name: "Foundry", cost: { ingot: 10, relic_shard: 4 }, unlocks: ["steel_chain"] },
   ],
 };
 
@@ -197,6 +206,12 @@ const defaultState = () => ({
   inventory: {
     herb: 0,
     boar_hide: 0,
+    grain: 0,
+    flour: 0,
+    oil: 0,
+    leather_strip: 0,
+    ingot: 0,
+    coal: 0,
     minor_potion: 1,
     moss: 0,
     iron_ore: 0,
@@ -626,8 +641,8 @@ function runTownProduction() {
     if (chance(0.3)) addItem("moss", 1);
   }
   if (state.town.projects.includes("mill") && state.time % 14 < 0.25) {
-    addItem("moss", 1);
-    if (chance(0.3)) addItem("ancient_coin", 1);
+    addItem("grain", 1);
+    if (chance(0.35)) addItem("flour", 1);
   }
   if (state.town.projects.includes("dock") && state.time % 15 < 0.25) {
     addItem("boar_hide", 1);
@@ -643,6 +658,18 @@ function runTownProduction() {
   }
   if (state.town.projects.includes("press") && state.time % 22 < 0.25) addItem("ember_ash", 1);
   if (state.town.projects.includes("workshop") && state.time % 24 < 0.25) addItem("legend_shard", 1);
+  if (state.town.projects.includes("tannery") && state.time % 16 < 0.25) {
+    addItem("leather_strip", 1);
+    if (chance(0.25)) addItem("oil", 1);
+  }
+  if (state.town.projects.includes("kiln") && state.time % 18 < 0.25) {
+    addItem("coal", 1);
+    if (chance(0.2)) addItem("ancient_coin", 1);
+  }
+  if (state.town.projects.includes("foundry") && state.time % 21 < 0.25) {
+    addItem("ingot", 1);
+    if (chance(0.25)) addItem("steel_blade", 1);
+  }
 }
 
 function chooseNextZone() {
@@ -947,10 +974,11 @@ function render() {
     <div class="raid-box">
       <strong>Production Chains</strong>
       <div class="inventory-row"><span>Granary</span><strong>Potions</strong></div>
-      <div class="inventory-row"><span>Lumber Mill</span><strong>Herbs</strong></div>
-      <div class="inventory-row"><span>Dock</span><strong>Hide</strong></div>
-      <div class="inventory-row"><span>Smelter</span><strong>Ore</strong></div>
-      <div class="inventory-row"><span>Forge</span><strong>War Band</strong></div>
+      <div class="inventory-row"><span>Mill</span><strong>Grain + Flour</strong></div>
+      <div class="inventory-row"><span>Tannery</span><strong>Leather + Oil</strong></div>
+      <div class="inventory-row"><span>Smelter</span><strong>Ore + Shards</strong></div>
+      <div class="inventory-row"><span>Kiln</span><strong>Coal + Coins</strong></div>
+      <div class="inventory-row"><span>Foundry</span><strong>Ingots + Steel</strong></div>
       <strong>Bank</strong>
       <small>${bankCount()} / ${bankCap()}</small>
       <strong>Mastery</strong>
@@ -977,6 +1005,7 @@ function render() {
     <div class="inventory-row"><span>Level</span><strong>${combatEnemy.enemy.level}</strong></div>
     <div class="inventory-row"><span>HP</span><strong>${combatEnemy.enemy.hp}</strong></div>
     <div class="inventory-row"><span>Attack</span><strong>${combatEnemy.enemy.attack}</strong></div>
+    <div class="inventory-row"><span>Weakness</span><strong>${combatEnemy.enemy.weakness}</strong></div>
     <div class="inventory-row"><span>Style</span><strong>${state.loadout.combat.style}</strong></div>
   `;
   el.combatLoadout.innerHTML = Object.entries(state.loadout.combat)
@@ -1003,6 +1032,7 @@ function render() {
     <div class="inventory-row"><span>Style</span><strong>${state.loadout.combat.style}</strong></div>
     <div class="inventory-row"><span>Slash Unlocked</span><strong>${state.combatStyles.slash ? "Yes" : "No"}</strong></div>
     <div class="inventory-row"><span>Focus Unlocked</span><strong>${state.combatStyles.focus ? "Yes" : "No"}</strong></div>
+    <div class="inventory-row"><span>Enemy Resist</span><strong>${JSON.stringify(currentZone().enemy.resist ?? {})}</strong></div>
   `;
   el.combatStyleBar.style.width = `${state.loadout.combat.style === "balanced" ? 100 : state.loadout.combat.style === currentZone().enemy.weakness ? 100 : 60}%`;
   el.combatStyleText.textContent = `Enemy weak to ${currentZone().enemy.weakness}`;
