@@ -40,6 +40,11 @@
 
       <section class="grid">
         <article class="panel">
+          <h2>Tabs</h2>
+          <div class="tab-bar" id="tab-bar"></div>
+        </article>
+
+        <article class="panel">
           <h2>Hero</h2>
           <div class="bars">
             <div class="bar-row">
@@ -56,24 +61,15 @@
           <div class="stats" id="stats"></div>
         </article>
 
-        <article class="panel">
-          <h2>Automations</h2>
+        <article class="panel" data-panel="skills">
+          <h2>Skills</h2>
+          <div class="skill-tree" id="activity-list"></div>
           <div class="automation-list" id="automation-list"></div>
-        </article>
-
-        <article class="panel">
-          <h2>Zones</h2>
-          <div class="zone-list" id="zone-list"></div>
-          <div class="raid-panel" id="raid-panel"></div>
-        </article>
-
-        <article class="panel">
-          <h2>Skill Tree</h2>
           <div class="skill-tree" id="skill-tree"></div>
         </article>
 
-        <article class="panel">
-          <h2>Inventory</h2>
+        <article class="panel" data-panel="bank">
+          <h2>Bank</h2>
           <div class="subgrid">
             <div>
               <h3>Items</h3>
@@ -86,13 +82,15 @@
           </div>
         </article>
 
-        <article class="panel">
-          <h2>Quests</h2>
-          <div class="quest-list" id="quest-list"></div>
+        <article class="panel" data-panel="combat">
+          <h2>Combat</h2>
+          <div class="zone-list" id="zone-list"></div>
+          <div class="raid-panel" id="raid-panel"></div>
         </article>
 
-        <article class="panel">
-          <h2>Party</h2>
+        <article class="panel" data-panel="town">
+          <h2>Town</h2>
+          <div class="quest-list" id="quest-list"></div>
           <div class="party-list" id="party-list"></div>
         </article>
 

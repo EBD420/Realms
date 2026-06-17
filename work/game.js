@@ -4,16 +4,28 @@ const OFFLINE_CAP_SECONDS = 8 * 60 * 60;
 const DEFINITIONS = {
   skills: [
     { id: "combat", name: "Combat", max: 100 },
-    { id: "gathering", name: "Gathering", max: 100 },
+    { id: "woodcutting", name: "Woodcutting", max: 100 },
+    { id: "fishing", name: "Fishing", max: 100 },
+    { id: "mining", name: "Mining", max: 100 },
     { id: "crafting", name: "Crafting", max: 100 },
     { id: "survival", name: "Survival", max: 100 },
     { id: "leadership", name: "Leadership", max: 100 },
   ],
+  activities: [
+    { id: "combat", name: "Combat", skill: "combat", desc: "Fight enemies in the current zone." },
+    { id: "woodcutting", name: "Woodcutting", skill: "woodcutting", desc: "Chop logs for crafting and gold." },
+    { id: "fishing", name: "Fishing", skill: "fishing", desc: "Catch fish for food and XP." },
+    { id: "mining", name: "Mining", skill: "mining", desc: "Mine ore for gear progression." },
+    { id: "crafting", name: "Crafting", skill: "crafting", desc: "Turn materials into equipment." },
+  ],
   skillTree: [
     { id: "war_training", skill: "combat", name: "War Training", cost: 1, req: 2, desc: "+2 attack", effect: (s) => { s.hero.baseAttack += 2; } },
     { id: "guard_stance", skill: "combat", name: "Guard Stance", cost: 1, req: 6, desc: "+2 defense", effect: (s) => { s.hero.baseDefense += 2; } },
-    { id: "prospector", skill: "gathering", name: "Prospector", cost: 1, req: 2, desc: "+25% gathering yield", effect: (s) => { s.modifiers.gatheringYield += 0.25; } },
-    { id: "scavenger", skill: "gathering", name: "Scavenger", cost: 1, req: 7, desc: "+10% loot chance", effect: (s) => { s.modifiers.lootChance += 0.1; } },
+    { id: "prospector", skill: "woodcutting", name: "Prospector", cost: 1, req: 2, desc: "+25% gathering yield", effect: (s) => { s.modifiers.gatheringYield += 0.25; } },
+    { id: "harvester", skill: "woodcutting", name: "Harvester", cost: 1, req: 2, desc: "+20% log yield", effect: (s) => { s.modifiers.logYield += 0.2; } },
+    { id: "scavenger", skill: "woodcutting", name: "Scavenger", cost: 1, req: 7, desc: "+10% loot chance", effect: (s) => { s.modifiers.lootChance += 0.1; } },
+    { id: "angler", skill: "fishing", name: "Angler", cost: 1, req: 2, desc: "+20% fish yield", effect: (s) => { s.modifiers.fishYield += 0.2; } },
+    { id: "miner", skill: "mining", name: "Miner", cost: 1, req: 2, desc: "+20% ore yield", effect: (s) => { s.modifiers.oreYield += 0.2; } },
     { id: "field_medic", skill: "survival", name: "Field Medic", cost: 1, req: 2, desc: "+4 max HP", effect: (s) => { s.hero.baseMaxHp += 4; } },
     { id: "camp_craft", skill: "crafting", name: "Camp Craft", cost: 1, req: 2, desc: "Unlock basic equipment crafting", effect: (s) => { s.unlocks.crafting = true; } },
     { id: "war_leader", skill: "leadership", name: "War Leader", cost: 2, req: 5, desc: "+1 party member cap", effect: (s) => { s.party.maxMembers += 1; } },
@@ -80,7 +92,17 @@ const DEFINITIONS = {
     leather_armor: { name: "Leather Armor", type: "equipment", slot: "armor", defense: 2, cost: 3 },
     scout_cloak: { name: "Scout Cloak", type: "equipment", slot: "cloak", defense: 1, maxHp: 8, cost: 4 },
     war_band: { name: "War Band", type: "equipment", slot: "ring", attack: 2, defense: 1, cost: 5 },
+    bronze_pick: { name: "Bronze Pick", type: "equipment", slot: "weapon", attack: 2, cost: 2 },
+    fisher_hat: { name: "Fisher Hat", type: "equipment", slot: "cloak", maxHp: 2, cost: 2 },
   },
+  bankCategories: {
+    materials: ["herb", "boar_hide", "moss", "iron_ore", "bog_venom", "relic_shard", "drake_scale", "obsidian_core", "ember_ash", "legend_shard"],
+    consumables: ["minor_potion"],
+    currency: ["ancient_coin"],
+    equipment: ["steel_blade", "iron_sword", "leather_armor", "scout_cloak", "war_band", "bronze_pick", "fisher_hat"],
+    loot: ["raid_chest"],
+  },
+  masteryActivities: ["combat", "woodcutting", "fishing", "mining", "crafting"],
   quests: [
     { id: "hunt_boil", name: "Boar Problem", goal: { itemId: "boar_hide", qty: 5 }, rewards: { gold: 25, xp: 30, skillPoint: 1 } },
     { id: "bog_path", name: "Bog Supplies", goal: { itemId: "bog_venom", qty: 4 }, rewards: { gold: 45, xp: 50, skillPoint: 1 } },
@@ -90,6 +112,13 @@ const DEFINITIONS = {
     { id: "lyra", name: "Lyra", cost: 25, bonus: { attack: 2, defense: 1, gatheringYield: 0.08 } },
     { id: "toren", name: "Toren", cost: 45, bonus: { attack: 4, maxHp: 12, raidRewards: 0.08 } },
     { id: "mira", name: "Mira", cost: 70, bonus: { defense: 3, lootChance: 0.08, raidRewards: 0.1 } },
+  ],
+  townProjects: [
+    { id: "granary", name: "Granary", cost: { herb: 10, boar_hide: 5 }, unlocks: ["bank_cap"] },
+    { id: "lumbermill", name: "Lumber Mill", cost: { herb: 15, iron_ore: 5 }, unlocks: ["log_yield"] },
+    { id: "dock", name: "Town Dock", cost: { moss: 10, iron_ore: 10 }, unlocks: ["fish_yield"] },
+    { id: "smelter", name: "Smelter", cost: { iron_ore: 15, relic_shard: 2 }, unlocks: ["ore_yield"] },
+    { id: "forge", name: "Forge", cost: { iron_ore: 20, boar_hide: 10 }, unlocks: ["crafting_bonus"] },
   ],
 };
 
@@ -109,11 +138,14 @@ const defaultState = () => ({
   },
   skills: {
     combat: 1,
-    gathering: 1,
+    woodcutting: 1,
+    fishing: 1,
+    mining: 1,
     crafting: 1,
     survival: 1,
     leadership: 1,
   },
+  activeActivity: "combat",
   zoneId: "greenwood_fields",
   world: {
     zonesUnlocked: ["greenwood_fields"],
@@ -143,7 +175,10 @@ const defaultState = () => ({
     leather_armor: 0,
     scout_cloak: 0,
     war_band: 0,
+    bronze_pick: 0,
+    fisher_hat: 0,
   },
+  bankCap: 100,
   party: {
     members: [],
     maxMembers: 2,
@@ -156,10 +191,26 @@ const defaultState = () => ({
     progress: 0,
     completions: 0,
   },
+  mastery: {
+    combat: 0,
+    woodcutting: 0,
+    fishing: 0,
+    mining: 0,
+    crafting: 0,
+  },
+  town: {
+    projects: [],
+  },
+  tab: "skills",
   modifiers: {
     gatheringYield: 1,
+    logYield: 1,
+    fishYield: 1,
+    oreYield: 1,
     lootChance: 1,
     raidRewards: 1,
+    bankCapBonus: 0,
+    craftingBonus: 0,
   },
   unlocks: {
     crafting: false,
@@ -187,6 +238,7 @@ const el = {
   hpText: document.querySelector("#hp-text"),
   xpText: document.querySelector("#xp-text"),
   stats: document.querySelector("#stats"),
+  activityList: document.querySelector("#activity-list"),
   autoList: document.querySelector("#automation-list"),
   log: document.querySelector("#log"),
   skillTree: document.querySelector("#skill-tree"),
@@ -265,6 +317,22 @@ function effectiveStats() {
   };
 }
 
+function applyTownProject(projectId) {
+  const project = DEFINITIONS.townProjects.find((entry) => entry.id === projectId);
+  if (!project || state.town.projects.includes(projectId)) return;
+  const hasCost = Object.entries(project.cost).every(([itemId, qty]) => (state.inventory[itemId] ?? 0) >= qty);
+  if (!hasCost) return;
+  for (const [itemId, qty] of Object.entries(project.cost)) removeItem(itemId, qty);
+  state.town.projects.push(projectId);
+  for (const unlock of project.unlocks) {
+    if (unlock === "bank_cap") state.modifiers.bankCapBonus += 25;
+    if (unlock === "log_yield") state.modifiers.logYield += 0.25;
+    if (unlock === "fish_yield") state.modifiers.fishYield += 0.25;
+    if (unlock === "ore_yield") state.modifiers.oreYield += 0.25;
+  }
+  addLog(`Completed town project: ${project.name}.`);
+}
+
 function equippedBonuses() {
   return Object.values(state.equipment).reduce((sum, itemId) => {
     const item = itemId ? DEFINITIONS.items[itemId] : null;
@@ -305,7 +373,7 @@ function ensureUnlocks() {
   }
 }
 
-function awardSkillXp(skillId, amount) {
+function gainSkillXp(skillId, amount) {
   const before = Math.floor(state.skills[skillId]);
   state.skills[skillId] += amount;
   const after = Math.floor(state.skills[skillId]);
@@ -313,6 +381,10 @@ function awardSkillXp(skillId, amount) {
     state.skillPoints += after - before;
     addLog(`${capitalize(skillId)} skill increased to ${after}.`);
   }
+}
+
+function bankSpaceOk(qty = 1) {
+  return bankCount() + qty <= bankCap();
 }
 
 function capitalize(text) {
@@ -343,11 +415,39 @@ function chance(prob) {
 }
 
 function addItem(itemId, qty) {
+  if (!bankSpaceOk(qty)) {
+    addLog("Bank is full.");
+    return;
+  }
   state.inventory[itemId] = (state.inventory[itemId] ?? 0) + qty;
 }
 
 function removeItem(itemId, qty) {
   state.inventory[itemId] = Math.max(0, (state.inventory[itemId] ?? 0) - qty);
+}
+
+function bankCount() {
+  return Object.values(state.inventory).reduce((sum, qty) => sum + qty, 0);
+}
+
+function bankCap() {
+  return state.bankCap + state.modifiers.bankCapBonus;
+}
+
+function masteryXp(activity, amount) {
+  state.mastery[activity] += amount;
+  const level = Math.floor(state.mastery[activity] / 10) + 1;
+  if (state.mastery[activity] % 10 < amount) {
+    addLog(`${capitalize(activity)} mastery reached ${level}.`);
+    if (level === 5) {
+      if (activity === "combat") state.hero.baseAttack += 1;
+      if (activity === "woodcutting") state.modifiers.logYield += 0.1;
+      if (activity === "fishing") state.modifiers.fishYield += 0.1;
+      if (activity === "mining") state.modifiers.oreYield += 0.1;
+      if (activity === "crafting") state.modifiers.craftingBonus += 1;
+      addLog(`${capitalize(activity)} mastery milestone unlocked.`);
+    }
+  }
 }
 
 function autoEquipBetter() {
@@ -416,6 +516,7 @@ function craftIfPossible() {
     for (const [itemId, qty] of Object.entries(recipe.cost)) removeItem(itemId, qty);
     addItem(recipe.itemId, 1);
     addLog(`Crafted ${DEFINITIONS.items[recipe.itemId].name}.`);
+    masteryXp("crafting", 0.5);
     autoEquipBetter();
     break;
   }
@@ -429,6 +530,14 @@ function recruitParty() {
   state.gold -= available.cost;
   state.party.members.push(available.id);
   addLog(`${available.name} joined the party.`);
+}
+
+function runTownProduction() {
+  if (state.town.projects.includes("granary") && state.time % 10 < 0.25) addItem("minor_potion", 1);
+  if (state.town.projects.includes("lumbermill") && state.time % 12 < 0.25) addItem("herb", 1);
+  if (state.town.projects.includes("dock") && state.time % 15 < 0.25) addItem("boar_hide", 1);
+  if (state.town.projects.includes("smelter") && state.time % 18 < 0.25) addItem("iron_ore", 1);
+  if (state.town.projects.includes("forge") && state.time % 20 < 0.25) addItem("war_band", 1);
 }
 
 function chooseNextZone() {
@@ -457,7 +566,8 @@ function fight(dt) {
     const goldReward = roll(zone.rewards.gold[0], zone.rewards.gold[1]) * rewardMultiplier;
     state.gold += goldReward;
     gainHeroXp(zone.rewards.xp * rewardMultiplier);
-    awardSkillXp("combat", 0.35);
+    gainSkillXp("combat", 0.35);
+    masteryXp("combat", 0.5);
     addLog(`Defeated ${zone.enemy.name} in ${zone.name}.`);
     dropLoot(zone);
     if (zone.raid) state.raid.completions += 1;
@@ -488,7 +598,8 @@ function gather(dt) {
   if (chance(zone.gather.chance)) {
     const qty = Math.max(1, Math.round(roll(zone.gather.qty[0], zone.gather.qty[1]) * yieldQty));
     addItem(zone.gather.itemId, qty);
-    awardSkillXp("gathering", 0.3);
+    gainSkillXp("woodcutting", 0.3);
+    masteryXp("woodcutting", 0.25);
     addLog(`Gathered ${qty} ${DEFINITIONS.items[zone.gather.itemId].name}.`);
   }
 }
@@ -497,18 +608,64 @@ function rest(dt) {
   const stats = effectiveStats();
   if (state.hero.hp < stats.maxHp) {
     state.hero.hp = Math.min(stats.maxHp, state.hero.hp + 8 * dt);
-    awardSkillXp("survival", 0.15);
+    gainSkillXp("survival", 0.15);
+  }
+}
+
+function woodcut(dt) {
+  const qty = Math.max(1, Math.round((1 + state.skills.woodcutting * 0.05) * dt * effectiveStats().logYield));
+  addItem("herb", qty);
+  gainSkillXp("woodcutting", 0.35);
+  masteryXp("woodcutting", 0.4);
+  addLog(`Chopped ${qty} logs.`);
+}
+
+function fish(dt) {
+  const qty = Math.max(1, Math.round((1 + state.skills.fishing * 0.05) * dt * effectiveStats().fishYield));
+  addItem("minor_potion", qty > 1 ? 1 : 0);
+  gainSkillXp("fishing", 0.35);
+  masteryXp("fishing", 0.4);
+  addLog(`Fished ${qty} catches.`);
+}
+
+function mine(dt) {
+  const qty = Math.max(1, Math.round((1 + state.skills.mining * 0.05) * dt * effectiveStats().oreYield));
+  addItem("iron_ore", qty);
+  gainSkillXp("mining", 0.35);
+  masteryXp("mining", 0.4);
+  addLog(`Mined ${qty} ore.`);
+}
+
+function runActiveActivity(dt) {
+  switch (state.activeActivity) {
+    case "combat":
+      fight(dt);
+      break;
+    case "woodcutting":
+      woodcut(dt);
+      break;
+    case "fishing":
+      fish(dt);
+      break;
+    case "mining":
+      mine(dt);
+      break;
+    case "crafting":
+      craftIfPossible();
+      break;
+    default:
+      break;
   }
 }
 
 function tick(dt) {
   state.time += dt;
   if (state.auto.party) recruitParty();
-  if (state.auto.combat) fight(dt);
-  if (state.auto.gather) gather(dt);
+  runActiveActivity(dt);
   if (state.auto.rest) rest(dt);
   craftIfPossible();
   progressQuests();
+  runTownProduction();
   sellDuplicateLoot();
   chooseNextZone();
   render();
@@ -575,6 +732,27 @@ function render() {
     <div class="stat"><span>Defense</span><strong>${Math.floor(stats.defense)}</strong></div>
     <div class="stat"><span>Skill Points</span><strong>${state.skillPoints}</strong></div>
   `;
+
+  el.saveStatus.textContent = `Bank ${bankCount()} / ${bankCap()} | Tab ${capitalize(state.tab)}`;
+
+  const tabs = [
+    { id: "skills", label: "Skills" },
+    { id: "bank", label: "Bank" },
+    { id: "combat", label: "Combat" },
+    { id: "town", label: "Town" },
+  ];
+  document.querySelector("#tab-bar").innerHTML = tabs
+    .map((tab) => `<button class="tab-button ${state.tab === tab.id ? "active" : ""}" data-tab="${tab.id}">${tab.label}</button>`)
+    .join("");
+
+  el.activityList.innerHTML = DEFINITIONS.activities
+    .map((activity) => `
+      <button class="skill-node ${state.activeActivity === activity.id ? "active" : ""}" data-activity="${activity.id}">
+        <strong>${activity.name}</strong>
+        <small>${activity.desc}</small>
+      </button>
+    `)
+    .join("");
 
   el.autoList.innerHTML = Object.entries(state.auto)
     .map(([key, enabled]) => `
@@ -647,6 +825,16 @@ function render() {
 
   el.raidPanel.innerHTML = `
     <div class="raid-box">
+      <strong>Bank</strong>
+      <small>${bankCount()} / ${bankCap()}</small>
+      <strong>Mastery</strong>
+      ${Object.entries(state.mastery).map(([k, v]) => `<div class="inventory-row"><span>${capitalize(k)}</span><strong>${v.toFixed(1)}</strong></div>`).join("")}
+      <strong>Town Projects</strong>
+      ${DEFINITIONS.townProjects.map((project) => {
+        const done = state.town.projects.includes(project.id);
+        const canBuild = !done && Object.entries(project.cost).every(([itemId, qty]) => (state.inventory[itemId] ?? 0) >= qty);
+        return `<button class="town-project ${done ? "completed" : ""}" data-town="${project.id}" ${canBuild ? "" : "disabled"}><strong>${project.name}</strong><small>${Object.entries(project.cost).map(([itemId, qty]) => `${DEFINITIONS.items[itemId].name} ${qty}`).join(", ")}</small></button>`;
+      }).join("")}
       <strong>Raid Progress</strong>
       <div class="bar"><div class="fill xp" style="width: ${Math.min(100, state.raid.progress)}%"></div></div>
       <small>Completions: ${state.raid.completions} | Need at least 1 party member to run</small>
@@ -656,16 +844,30 @@ function render() {
   el.log.innerHTML = state.log
     .map((entry) => `<div class="log-entry">${entry.message}</div>`)
     .join("");
+
+  document.querySelectorAll("[data-panel]").forEach((panel) => {
+    panel.style.display = panel.dataset.panel === state.tab ? "block" : "none";
+  });
 }
 
 function bindUI() {
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-auto], [data-zone], [data-skill-node], [data-quest], [data-party]");
+    const target = event.target.closest("[data-auto], [data-zone], [data-skill-node], [data-quest], [data-party], [data-activity], [data-town], [data-tab]");
     if (!target) return;
+    if (target.dataset.tab) {
+      state.tab = target.dataset.tab;
+      render();
+      saveState();
+      return;
+    }
     if (target.dataset.auto) toggleAuto(target.dataset.auto);
     if (target.dataset.zone) toggleZone(target.dataset.zone);
     if (target.dataset.skillNode) unlockNode(target.dataset.skillNode);
     if (target.dataset.quest) acceptQuest(target.dataset.quest);
+    if (target.dataset.activity) {
+      state.activeActivity = target.dataset.activity;
+      addLog(`Selected ${capitalize(target.dataset.activity)}.`);
+    }
     if (target.dataset.party) {
       const member = DEFINITIONS.partyMembers.find((m) => m.id === target.dataset.party);
       if (member && !state.party.members.includes(member.id) && state.party.members.length < state.party.maxMembers && state.gold >= member.cost) {
@@ -674,6 +876,7 @@ function bindUI() {
         addLog(`${member.name} joined the party.`);
       }
     }
+    if (target.dataset.town) applyTownProject(target.dataset.town);
     render();
     saveState();
   });
