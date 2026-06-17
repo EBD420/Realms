@@ -317,6 +317,14 @@ const el = {
   combatStyleText: document.querySelector("#combat-style-text"),
 };
 
+function safeSetText(node, value) {
+  if (node) node.textContent = value;
+}
+
+function safeSetHTML(node, value) {
+  if (node) node.innerHTML = value;
+}
+
 function now() {
   return Date.now();
 }
@@ -862,23 +870,26 @@ function applyOfflineProgress() {
 function render() {
   const zone = currentZone();
   const stats = effectiveStats();
-  el.location.textContent = zone.name;
-  el.gold.textContent = Math.floor(state.gold);
-  el.time.textContent = `${Math.floor(state.time)}s`;
+  safeSetText(el.location, zone.name);
+  safeSetText(el.gold, Math.floor(state.gold));
+  safeSetText(el.time, `${Math.floor(state.time)}s`);
 
-  el.hpText.textContent = `${Math.floor(state.hero.hp)} / ${Math.floor(stats.maxHp)}`;
-  el.xpText.textContent = `${Math.floor(state.hero.xp)} / ${xpToNext(state.hero.level)}`;
-  el.hpBar.style.width = `${Math.max(0, Math.min(100, (state.hero.hp / stats.maxHp) * 100))}%`;
-  el.xpBar.style.width = `${Math.max(0, Math.min(100, (state.hero.xp / xpToNext(state.hero.level)) * 100))}%`;
+  safeSetText(el.hpText, `${Math.floor(state.hero.hp)} / ${Math.floor(stats.maxHp)}`);
+  safeSetText(el.xpText, `${Math.floor(state.hero.xp)} / ${xpToNext(state.hero.level)}`);
+  if (el.hpBar) el.hpBar.style.width = `${Math.max(0, Math.min(100, (state.hero.hp / stats.maxHp) * 100))}%`;
+  if (el.xpBar) el.xpBar.style.width = `${Math.max(0, Math.min(100, (state.hero.xp / xpToNext(state.hero.level)) * 100))}%`;
 
-  el.stats.innerHTML = `
+  safeSetHTML(el.stats, `
     <div class="stat"><span>Level</span><strong>${state.hero.level}</strong></div>
     <div class="stat"><span>Attack</span><strong>${Math.floor(stats.attack)}</strong></div>
     <div class="stat"><span>Defense</span><strong>${Math.floor(stats.defense)}</strong></div>
+    <div class="stat"><span>Strength</span><strong>${state.skills.strength}</strong></div>
+    <div class="stat"><span>Hitpoints</span><strong>${state.skills.hitpoints}</strong></div>
+    <div class="stat"><span>Leadership</span><strong>${state.skills.leadership}</strong></div>
     <div class="stat"><span>Skill Points</span><strong>${state.skillPoints}</strong></div>
-  `;
+  `);
 
-  el.saveStatus.textContent = `Bank ${bankCount()} / ${bankCap()} | Tab ${capitalize(state.tab)}`;
+  safeSetText(el.saveStatus, `Bank ${bankCount()} / ${bankCap()} | Tab ${capitalize(state.tab)}`);
 
   const tabs = [
     { id: "skills", label: "Skills" },
@@ -886,20 +897,25 @@ function render() {
     { id: "combat", label: "Combat" },
     { id: "town", label: "Town" },
   ];
-  document.querySelector("#tab-bar").innerHTML = tabs
+  safeSetHTML(document.querySelector("#tab-bar"), tabs
     .map((tab) => `<button class="tab-button ${state.tab === tab.id ? "active" : ""}" data-tab="${tab.id}">${tab.label}</button>`)
-    .join("");
+    .join(""));
 
-  el.activityList.innerHTML = DEFINITIONS.activities
+  safeSetHTML(el.activityList, `
+    <div class="inventory-row"><span>Active</span><strong>${capitalize(state.activeActivity)}</strong></div>
+    <div class="inventory-row"><span>Automation</span><strong>${Object.entries(state.auto).filter(([, v]) => v).length} enabled</strong></div>
+  ` + DEFINITIONS.activities
     .map((activity) => `
       <button class="skill-node ${state.activeActivity === activity.id ? "active" : ""}" data-activity="${activity.id}">
         <strong>${activity.name}</strong>
         <small>${activity.desc}</small>
       </button>
     `)
-    .join("");
+    .join(""));
 
-  el.autoList.innerHTML = Object.entries(state.auto)
+  safeSetHTML(el.autoList, `
+    <div class="inventory-row"><span>Loop</span><strong>Idle automation controls</strong></div>
+  ` + Object.entries(state.auto)
     .map(([key, enabled]) => `
       <button class="automation-item" data-auto="${key}">
         <div>
@@ -909,29 +925,35 @@ function render() {
         <div class="${enabled ? "good" : "bad"}">${enabled ? "ON" : "OFF"}</div>
       </button>
     `)
-    .join("");
+    .join(""));
 
-  el.zoneList.innerHTML = DEFINITIONS.zones
+  safeSetHTML(el.zoneList, `
+    <div class="inventory-row"><span>Travel</span><strong>Unlock zones by level</strong></div>
+  ` + DEFINITIONS.zones
     .map((zoneEntry) => `
       <button class="zone-item ${zoneEntry.id === state.zoneId ? "active" : ""}" data-zone="${zoneEntry.id}" ${state.hero.level < zoneEntry.reqLevel ? "disabled" : ""}>
         <strong>${zoneEntry.name}</strong>
         <small>${zoneEntry.raid ? "Raid" : `Req level ${zoneEntry.reqLevel}`}</small>
       </button>
     `)
-    .join("");
+    .join(""));
 
   const bankSearch = (el.bankSearch?.value ?? "").trim().toLowerCase();
   const bankFilter = el.bankFilter?.value ?? "all";
-  el.inventory.innerHTML = Object.entries(state.inventory)
+  safeSetHTML(el.inventory, Object.entries(state.inventory)
     .filter(([itemId, qty]) => qty > 0 && itemMatchesFilter(itemId, bankFilter) && (bankSearch === "" || (DEFINITIONS.items[itemId]?.name ?? itemId).toLowerCase().includes(bankSearch)))
     .map(([itemId, qty]) => `<div class="inventory-row"><span>${DEFINITIONS.items[itemId]?.name ?? itemId}</span><strong>${qty}</strong></div>`)
-    .join("") || `<div class="empty">No items match your filter.</div>`;
+    .join("") || `<div class="empty">No items match your filter.</div>`);
 
-  el.equipment.innerHTML = Object.entries(state.equipment)
+  safeSetHTML(el.equipment, `
+    <div class="inventory-row"><span>Loadout</span><strong>Equipped gear</strong></div>
+  ` + Object.entries(state.equipment)
     .map(([slot, itemId]) => `<div class="inventory-row"><span>${capitalize(slot)}</span><strong>${itemId ? DEFINITIONS.items[itemId]?.name : "Empty"}</strong></div>`)
-    .join("");
+    .join(""));
 
-  el.skillTree.innerHTML = DEFINITIONS.skillTree
+  safeSetHTML(el.skillTree, `
+    <div class="inventory-row"><span>Points</span><strong>${state.skillPoints}</strong></div>
+  ` + DEFINITIONS.skillTree
     .map((node) => {
       const unlocked = state.unlockedNodes?.includes(node.id);
       const canUnlock = canBuyNode(node);
@@ -942,9 +964,11 @@ function render() {
         </button>
       `;
     })
-    .join("");
+    .join(""));
 
-  el.questList.innerHTML = DEFINITIONS.quests
+  safeSetHTML(el.questList, `
+    <div class="inventory-row"><span>Quest Log</span><strong>${state.quests.active.length} active</strong></div>
+  ` + DEFINITIONS.quests
     .map((quest) => {
       const completed = state.quests.completed.includes(quest.id);
       const active = state.quests.active.includes(quest.id);
@@ -956,9 +980,11 @@ function render() {
         </button>
       `;
     })
-    .join("");
+    .join(""));
 
-  el.partyList.innerHTML = DEFINITIONS.partyMembers
+  safeSetHTML(el.partyList, `
+    <div class="inventory-row"><span>Party</span><strong>${state.party.members.length} / ${state.party.maxMembers}</strong></div>
+  ` + DEFINITIONS.partyMembers
     .map((member) => {
       const hired = state.party.members.includes(member.id);
       return `
@@ -968,9 +994,9 @@ function render() {
         </button>
       `;
     })
-    .join("");
+    .join(""));
 
-  el.raidPanel.innerHTML = `
+  safeSetHTML(el.raidPanel, `
     <div class="raid-box">
       <strong>Production Chains</strong>
       <div class="inventory-row"><span>Granary</span><strong>Potions</strong></div>
@@ -993,22 +1019,24 @@ function render() {
       <div class="bar"><div class="fill xp" style="width: ${Math.min(100, state.raid.progress)}%"></div></div>
       <small>Completions: ${state.raid.completions} | Need at least 1 party member to run</small>
     </div>
-  `;
+  `);
 
-  el.log.innerHTML = state.log
+  safeSetHTML(el.log, state.log
     .map((entry) => `<div class="log-entry">${entry.message}</div>`)
-    .join("");
+    .join("") || `<div class="log-entry">The world is quiet. Start an activity to begin the loop.</div>`);
 
   const combatEnemy = currentZone();
-  el.combatEnemy.innerHTML = `
+  safeSetHTML(el.combatEnemy, `
     <div class="inventory-row"><span>Enemy</span><strong>${combatEnemy.enemy.name}</strong></div>
     <div class="inventory-row"><span>Level</span><strong>${combatEnemy.enemy.level}</strong></div>
     <div class="inventory-row"><span>HP</span><strong>${combatEnemy.enemy.hp}</strong></div>
     <div class="inventory-row"><span>Attack</span><strong>${combatEnemy.enemy.attack}</strong></div>
     <div class="inventory-row"><span>Weakness</span><strong>${combatEnemy.enemy.weakness}</strong></div>
     <div class="inventory-row"><span>Style</span><strong>${state.loadout.combat.style}</strong></div>
-  `;
-  el.combatLoadout.innerHTML = Object.entries(state.loadout.combat)
+  `);
+  safeSetHTML(el.combatLoadout, `
+    <div class="inventory-row"><span>Loadout</span><strong>Combat editing</strong></div>
+  ` + Object.entries(state.loadout.combat)
     .map(([slot, itemId]) => slot === "style"
       ? `
         <div class="skill-tree">
@@ -1027,15 +1055,15 @@ function render() {
             .map(([id]) => `<button class="town-project" data-loadout-slot="${slot}" data-loadout-item="${id}"><strong>Equip ${DEFINITIONS.items[id].name}</strong><small>Set as ${capitalize(slot)}</small></button>`)
             .join("") || `<div class="empty">No ${slot} gear in bank.</div>`}
         </div>`)
-    .join("");
-  el.combatStyle.innerHTML = `
+    .join(""));
+  safeSetHTML(el.combatStyle, `
     <div class="inventory-row"><span>Style</span><strong>${state.loadout.combat.style}</strong></div>
     <div class="inventory-row"><span>Slash Unlocked</span><strong>${state.combatStyles.slash ? "Yes" : "No"}</strong></div>
     <div class="inventory-row"><span>Focus Unlocked</span><strong>${state.combatStyles.focus ? "Yes" : "No"}</strong></div>
     <div class="inventory-row"><span>Enemy Resist</span><strong>${JSON.stringify(currentZone().enemy.resist ?? {})}</strong></div>
-  `;
-  el.combatStyleBar.style.width = `${state.loadout.combat.style === "balanced" ? 100 : state.loadout.combat.style === currentZone().enemy.weakness ? 100 : 60}%`;
-  el.combatStyleText.textContent = `Enemy weak to ${currentZone().enemy.weakness}`;
+  `);
+  if (el.combatStyleBar) el.combatStyleBar.style.width = `${state.loadout.combat.style === "balanced" ? 100 : state.loadout.combat.style === currentZone().enemy.weakness ? 100 : 60}%`;
+  safeSetText(el.combatStyleText, `Enemy weak to ${currentZone().enemy.weakness}`);
 
   document.querySelectorAll("[data-panel]").forEach((panel) => {
     panel.style.display = panel.dataset.panel === state.tab ? "block" : "none";
