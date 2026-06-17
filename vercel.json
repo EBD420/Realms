@@ -6,8 +6,12 @@
       "dest": "/index.html"
     },
     {
-      "src": "/(.*)",
+      "src": "/work/(.*)",
       "dest": "/work/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
