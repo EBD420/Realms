@@ -33,6 +33,8 @@ function buildDocument(markup) {
   const ids = [...markup.matchAll(/id="([^"]+)"/g)].map((m) => m[1]);
   const elements = new Map();
   for (const id of ids) elements.set(id, new Element(id));
+  elements.set("bank-search", new Element("bank-search", "input"));
+  elements.set("bank-filter", new Element("bank-filter", "select"));
   return {
     elements,
     querySelector(selector) {

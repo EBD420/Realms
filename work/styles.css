@@ -110,6 +110,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .tab-bar { display: flex; gap: 10px; flex-wrap: wrap; }
 .tab-button { padding: 12px 14px; }
 .combat-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.combat-grid > div { min-width: 0; }
 
 .subgrid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
 

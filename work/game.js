@@ -4,6 +4,10 @@ const OFFLINE_CAP_SECONDS = 8 * 60 * 60;
 const DEFINITIONS = {
   skills: [
     { id: "combat", name: "Combat", max: 100 },
+    { id: "strength", name: "Strength", max: 100 },
+    { id: "attack", name: "Attack", max: 100 },
+    { id: "hitpoints", name: "Hitpoints", max: 100 },
+    { id: "defense", name: "Defense", max: 100 },
     { id: "woodcutting", name: "Woodcutting", max: 100 },
     { id: "fishing", name: "Fishing", max: 100 },
     { id: "mining", name: "Mining", max: 100 },
@@ -44,7 +48,7 @@ const DEFINITIONS = {
       id: "greenwood_fields",
       name: "Greenwood Fields",
       reqLevel: 1,
-      enemy: { name: "Wild Boar", hp: 18, attack: 2, level: 1, weakness: "slash" },
+      enemy: { name: "Wild Boar", hp: 18, attack: 2, level: 1, weakness: "slash", resist: { focus: 0.15 } },
       rewards: { xp: 16, gold: [3, 6], loot: [{ itemId: "boar_hide", chance: 0.4, qty: [1, 2] }, { itemId: "minor_potion", chance: 0.08, qty: [1, 1] }] },
       gather: { itemId: "herb", chance: 0.18, qty: [1, 2] },
     },
@@ -52,7 +56,7 @@ const DEFINITIONS = {
       id: "ashen_bog",
       name: "Ashen Bog",
       reqLevel: 6,
-      enemy: { name: "Bog Crawler", hp: 32, attack: 5, level: 6, weakness: "focus" },
+      enemy: { name: "Bog Crawler", hp: 32, attack: 5, level: 6, weakness: "focus", resist: { slash: 0.1 } },
       rewards: { xp: 32, gold: [8, 13], loot: [{ itemId: "bog_venom", chance: 0.34, qty: [1, 1] }, { itemId: "iron_ore", chance: 0.26, qty: [1, 3] }] },
       gather: { itemId: "moss", chance: 0.22, qty: [1, 2] },
     },
@@ -60,7 +64,7 @@ const DEFINITIONS = {
       id: "sunken_ruins",
       name: "Sunken Ruins",
       reqLevel: 12,
-      enemy: { name: "Ruins Knight", hp: 52, attack: 8, level: 12, weakness: "slash" },
+      enemy: { name: "Ruins Knight", hp: 52, attack: 8, level: 12, weakness: "slash", resist: { focus: 0.2 } },
       rewards: { xp: 58, gold: [15, 24], loot: [{ itemId: "ancient_coin", chance: 0.28, qty: [1, 4] }, { itemId: "steel_blade", chance: 0.1, qty: [1, 1] }] },
       gather: { itemId: "relic_shard", chance: 0.2, qty: [1, 1] },
     },
@@ -68,7 +72,7 @@ const DEFINITIONS = {
       id: "obsidian_peak",
       name: "Obsidian Peak",
       reqLevel: 20,
-      enemy: { name: "Peak Drake", hp: 92, attack: 12, level: 20, weakness: "focus" },
+      enemy: { name: "Peak Drake", hp: 92, attack: 12, level: 20, weakness: "focus", resist: { slash: 0.15 } },
       rewards: { xp: 110, gold: [28, 42], loot: [{ itemId: "drake_scale", chance: 0.35, qty: [1, 2] }, { itemId: "obsidian_core", chance: 0.08, qty: [1, 1] }] },
       gather: { itemId: "ember_ash", chance: 0.24, qty: [1, 2] },
     },
@@ -77,7 +81,7 @@ const DEFINITIONS = {
       name: "Citadel Raid",
       reqLevel: 18,
       raid: true,
-      enemy: { name: "Citadel Warden", hp: 180, attack: 18, level: 18, weakness: "balanced" },
+      enemy: { name: "Citadel Warden", hp: 180, attack: 18, level: 18, weakness: "balanced", resist: { slash: 0.1, focus: 0.1 } },
       rewards: { xp: 180, gold: [45, 70], loot: [{ itemId: "raid_chest", chance: 0.45, qty: [1, 1] }, { itemId: "legend_shard", chance: 0.12, qty: [1, 1] }] },
     },
   ],
@@ -133,6 +137,9 @@ const DEFINITIONS = {
     { id: "dock", name: "Town Dock", cost: { moss: 10, iron_ore: 10 }, unlocks: ["fish_yield"] },
     { id: "smelter", name: "Smelter", cost: { iron_ore: 15, relic_shard: 2 }, unlocks: ["ore_yield"] },
     { id: "forge", name: "Forge", cost: { iron_ore: 20, boar_hide: 10 }, unlocks: ["crafting_bonus"] },
+    { id: "mill", name: "Windmill", cost: { herb: 20, moss: 10 }, unlocks: ["grain_chain"] },
+    { id: "press", name: "Oil Press", cost: { boar_hide: 12, moss: 10 }, unlocks: ["oil_chain"] },
+    { id: "workshop", name: "Workshop", cost: { iron_ore: 18, relic_shard: 5 }, unlocks: ["tool_chain"] },
   ],
 };
 
@@ -152,6 +159,10 @@ const defaultState = () => ({
   },
   skills: {
     combat: 1,
+    strength: 1,
+    attack: 1,
+    hitpoints: 1,
+    defense: 1,
     woodcutting: 1,
     fishing: 1,
     mining: 1,
@@ -243,6 +254,7 @@ const defaultState = () => ({
     oreLoot: false,
     fishMasteryBonus: 0,
     mineMasteryBonus: 0,
+    armorPen: 0,
   },
   unlocks: {
     crafting: false,
@@ -370,8 +382,9 @@ function effectiveStats() {
   const party = partyBonuses();
   return {
     maxHp: state.hero.baseMaxHp + gear.maxHp + party.maxHp,
-    attack: state.hero.baseAttack + gear.attack + party.attack,
-    defense: state.hero.baseDefense + gear.defense + party.defense,
+    attack: state.hero.baseAttack + gear.attack + party.attack + Math.floor(state.skills.attack * 0.05),
+    defense: state.hero.baseDefense + gear.defense + party.defense + Math.floor(state.skills.defense * 0.05),
+    armorPen: state.modifiers.armorPen + Math.floor(state.skills.strength * 0.03),
     gatheringYield: state.modifiers.gatheringYield + party.gatheringYield,
     lootChance: state.modifiers.lootChance + party.lootChance,
     raidRewards: state.modifiers.raidRewards + party.raidRewards,
@@ -507,6 +520,7 @@ function masteryXp(activity, amount) {
       { level: 10, bonus: () => { if (activity === "combat") state.hero.baseDefense += 1; if (activity === "woodcutting") state.modifiers.gatheringYield += 0.05; if (activity === "fishing") state.modifiers.fishLoot = true; if (activity === "mining") state.modifiers.oreLoot = true; if (activity === "crafting") state.unlocks.advancedCrafting = true; } },
       { level: 20, bonus: () => { if (activity === "combat") state.modifiers.raidRewards += 0.05; if (activity === "woodcutting") state.modifiers.logToHerb = true; if (activity === "fishing") state.modifiers.fishMasteryBonus += 0.05; if (activity === "mining") state.modifiers.mineMasteryBonus += 0.05; if (activity === "crafting") state.bankCap += 25; } },
       { level: 30, bonus: () => { if (activity === "combat") state.combatStyles.focus = true; if (activity === "woodcutting") state.modifiers.bankCapBonus += 10; if (activity === "fishing") state.modifiers.raidRewards += 0.02; if (activity === "mining") state.modifiers.raidRewards += 0.02; if (activity === "crafting") state.modifiers.craftingBonus += 2; } },
+      { level: 40, bonus: () => { if (activity === "combat") state.modifiers.armorPen += 2; if (activity === "woodcutting") state.modifiers.bankCapBonus += 15; if (activity === "fishing") state.modifiers.fishLoot = true; if (activity === "mining") state.modifiers.oreLoot = true; if (activity === "crafting") state.modifiers.craftingBonus += 3; } },
     ];
     for (const tier of tiers) {
       if (level === tier.level) {
@@ -611,6 +625,10 @@ function runTownProduction() {
     addItem("herb", 1);
     if (chance(0.3)) addItem("moss", 1);
   }
+  if (state.town.projects.includes("mill") && state.time % 14 < 0.25) {
+    addItem("moss", 1);
+    if (chance(0.3)) addItem("ancient_coin", 1);
+  }
   if (state.town.projects.includes("dock") && state.time % 15 < 0.25) {
     addItem("boar_hide", 1);
     if (chance(0.3)) addItem("bog_venom", 1);
@@ -623,6 +641,8 @@ function runTownProduction() {
     addItem("war_band", 1);
     if (chance(0.4)) addItem("bronze_pick", 1);
   }
+  if (state.town.projects.includes("press") && state.time % 22 < 0.25) addItem("ember_ash", 1);
+  if (state.town.projects.includes("workshop") && state.time % 24 < 0.25) addItem("legend_shard", 1);
 }
 
 function chooseNextZone() {
@@ -640,14 +660,15 @@ function fight(dt) {
   const stats = effectiveStats();
   const enemy = zone.enemy;
   const style = state.loadout.combat.style;
+  const resist = enemy.resist?.[style] ?? 0;
   const styleBonus = style === enemy.weakness ? 1.35 : style === "balanced" ? 1 : 0.9;
   const gearBonus = 1 + ((state.combatStyles.slash && style === "slash") ? 0.1 : 0) + ((state.combatStyles.focus && style === "focus") ? 0.1 : 0);
-  const damageToEnemy = Math.max(1, (stats.attack + state.hero.level * 0.2) * dt * styleBonus * gearBonus);
+  const damageToEnemy = Math.max(1, (stats.attack + state.skills.strength * 0.04 + state.hero.level * 0.2) * dt * styleBonus * gearBonus * (1 - resist) * (1 + stats.armorPen * 0.03));
   zone._enemyHp ??= zone.enemy.hp;
   zone._enemyHp -= damageToEnemy;
   if (zone._enemyHp > 0) {
     const incomingStyle = style === "focus" ? 0.85 : style === "slash" ? 1.1 : 1;
-    const incoming = Math.max(0, zone.enemy.attack * incomingStyle - stats.defense);
+    const incoming = Math.max(0, zone.enemy.attack * incomingStyle - stats.defense - Math.floor(state.skills.hitpoints * 0.03));
     state.hero.hp -= incoming * dt;
   }
   if (zone._enemyHp <= 0) {
@@ -657,6 +678,10 @@ function fight(dt) {
     state.gold += goldReward;
     gainHeroXp(zone.rewards.xp * rewardMultiplier);
     gainSkillXp("combat", 0.35);
+    gainSkillXp("strength", 0.2);
+    gainSkillXp("attack", 0.2);
+    gainSkillXp("hitpoints", 0.15);
+    gainSkillXp("defense", 0.15);
     masteryXp("combat", 0.5 * (style === enemy.weakness ? 1.5 : 1));
     addLog(`Defeated ${zone.enemy.name} in ${zone.name}.`);
     dropLoot(zone);
@@ -956,8 +981,23 @@ function render() {
   `;
   el.combatLoadout.innerHTML = Object.entries(state.loadout.combat)
     .map(([slot, itemId]) => slot === "style"
-      ? `<button class="town-project" data-style="balanced"><strong>Balanced</strong><small>Default stance</small></button><button class="town-project" data-style="slash"><strong>Slash</strong><small>High attack</small></button><button class="town-project" data-style="focus"><strong>Focus</strong><small>Higher defense</small></button>`
-      : `<div class="inventory-row"><span>${capitalize(slot)}</span><strong>${itemId ? DEFINITIONS.items[itemId]?.name : "Empty"}</strong></div>`)
+      ? `
+        <div class="skill-tree">
+          <button class="town-project" data-style="balanced"><strong>Balanced</strong><small>Default stance</small></button>
+          <button class="town-project" data-style="slash"><strong>Slash</strong><small>High attack</small></button>
+          <button class="town-project" data-style="focus"><strong>Focus</strong><small>Higher defense</small></button>
+        </div>`
+      : `
+        <div class="inventory-row">
+          <span>${capitalize(slot)}</span>
+          <strong>${itemId ? DEFINITIONS.items[itemId]?.name : "Empty"}</strong>
+        </div>
+        <div class="skill-tree">
+          ${Object.entries(state.inventory)
+            .filter(([id, qty]) => qty > 0 && DEFINITIONS.items[id]?.type === "equipment" && DEFINITIONS.items[id].slot === slot)
+            .map(([id]) => `<button class="town-project" data-loadout-slot="${slot}" data-loadout-item="${id}"><strong>Equip ${DEFINITIONS.items[id].name}</strong><small>Set as ${capitalize(slot)}</small></button>`)
+            .join("") || `<div class="empty">No ${slot} gear in bank.</div>`}
+        </div>`)
     .join("");
   el.combatStyle.innerHTML = `
     <div class="inventory-row"><span>Style</span><strong>${state.loadout.combat.style}</strong></div>
@@ -974,7 +1014,7 @@ function render() {
 
 function bindUI() {
   document.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-auto], [data-zone], [data-skill-node], [data-quest], [data-party], [data-activity], [data-town], [data-tab], [data-style]");
+    const target = event.target.closest("[data-auto], [data-zone], [data-skill-node], [data-quest], [data-party], [data-activity], [data-town], [data-tab], [data-style], [data-loadout-slot]");
     if (!target) return;
     if (target.dataset.tab) {
       state.tab = target.dataset.tab;
@@ -1000,6 +1040,7 @@ function bindUI() {
     }
     if (target.dataset.town) applyTownProject(target.dataset.town);
     if (target.dataset.style) state.loadout.combat.style = target.dataset.style;
+    if (target.dataset.loadoutSlot && target.dataset.loadoutItem) state.loadout.combat[target.dataset.loadoutSlot] = target.dataset.loadoutItem;
     render();
     saveState();
   });
