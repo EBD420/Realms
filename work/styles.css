@@ -109,6 +109,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .zone-list, .skill-tree, .inventory-list, .quest-list, .party-list { display: grid; gap: 10px; }
 .tab-bar { display: flex; gap: 10px; flex-wrap: wrap; }
 .tab-button { padding: 12px 14px; }
+.combat-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .subgrid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
 
@@ -175,6 +176,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .empty { color: var(--muted); padding: 8px 0; }
 .inventory-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 12px; }
 .raid-box { display: grid; gap: 10px; padding-top: 14px; }
+.town-project { display: block; }
 .skill-node small, .zone-item small, .quest-item small, .party-item small, .town-project small { display: block; margin-top: 4px; color: var(--muted); }
 
 .log-panel { min-height: 280px; }

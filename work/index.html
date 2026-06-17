@@ -70,6 +70,17 @@
 
         <article class="panel" data-panel="bank">
           <h2>Bank</h2>
+          <div class="button-row">
+            <input id="bank-search" type="text" placeholder="Search bank" />
+            <select id="bank-filter">
+              <option value="all">All</option>
+              <option value="materials">Materials</option>
+              <option value="consumables">Consumables</option>
+              <option value="currency">Currency</option>
+              <option value="equipment">Equipment</option>
+              <option value="loot">Loot</option>
+            </select>
+          </div>
           <div class="subgrid">
             <div>
               <h3>Items</h3>
@@ -84,6 +95,16 @@
 
         <article class="panel" data-panel="combat">
           <h2>Combat</h2>
+          <div class="combat-grid">
+            <div id="combat-enemy"></div>
+            <div id="combat-loadout"></div>
+            <div id="combat-style"></div>
+          </div>
+          <div class="bar-row">
+            <span>Style</span>
+            <div class="bar"><div id="combat-style-bar" class="fill hp"></div></div>
+            <span id="combat-style-text">Balanced</span>
+          </div>
           <div class="zone-list" id="zone-list"></div>
           <div class="raid-panel" id="raid-panel"></div>
         </article>
