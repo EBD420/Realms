@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Idle MMO Barebones</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Automated MMORPG Prototype</p>
+          <h1>Idle MMO</h1>
+          <p class="lede">
+            A fully automated idle MMO loop: combat, zones, loot, parties, quests, raids, and persistence.
+          </p>
+        </div>
+        <div class="status-card">
+          <div>
+            <span class="label">Location</span>
+            <strong id="location">Greenwood Fields</strong>
+          </div>
+          <div>
+            <span class="label">Gold</span>
+            <strong id="gold">0</strong>
+          </div>
+          <div>
+            <span class="label">Time</span>
+            <strong id="time">0.0s</strong>
+          </div>
+          <div class="button-row">
+            <button id="save-btn" type="button">Save</button>
+            <button id="load-btn" type="button">Load</button>
+            <button id="reset-btn" type="button" class="danger">Reset</button>
+          </div>
+          <div class="save-status" id="save-status">Not saved yet</div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Hero</h2>
+          <div class="bars">
+            <div class="bar-row">
+              <span>HP</span>
+              <div class="bar"><div id="hp-bar" class="fill hp"></div></div>
+              <span id="hp-text">100 / 100</span>
+            </div>
+            <div class="bar-row">
+              <span>XP</span>
+              <div class="bar"><div id="xp-bar" class="fill xp"></div></div>
+              <span id="xp-text">0 / 100</span>
+            </div>
+          </div>
+          <div class="stats" id="stats"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Automations</h2>
+          <div class="automation-list" id="automation-list"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Zones</h2>
+          <div class="zone-list" id="zone-list"></div>
+          <div class="raid-panel" id="raid-panel"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Skill Tree</h2>
+          <div class="skill-tree" id="skill-tree"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Inventory</h2>
+          <div class="subgrid">
+            <div>
+              <h3>Items</h3>
+              <div class="inventory-list" id="inventory"></div>
+            </div>
+            <div>
+              <h3>Equipment</h3>
+              <div class="inventory-list" id="equipment"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Quests</h2>
+          <div class="quest-list" id="quest-list"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Party</h2>
+          <div class="party-list" id="party-list"></div>
+        </article>
+
+        <article class="panel log-panel">
+          <h2>Activity Log</h2>
+          <div id="log" class="log"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
